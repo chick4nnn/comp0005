@@ -79,9 +79,9 @@ def genPoint() -> tuple:
 	return (random.randint(0, 32767), random.randint(0, 32767))
 
 def genPoints(limit: int) -> list:
-	return [genPoint() for point in range(limit)]
+	return [genPoint() for _ in range(limit)]
 
-inputSet = [ (0, 1), (1, 2), (3, 4), (5, 6), (7, 8), (9, 10), (10, 8), (7, -2) ]
+inputSet = genPoints(300)
 outputSet = grahamscan(inputSet)
 
 plt.figure()
