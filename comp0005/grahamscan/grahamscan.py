@@ -1,4 +1,6 @@
 import random
+import sys
+import timeit
 from math import atan2
 
 import matplotlib.pyplot as plt
@@ -75,21 +77,31 @@ def grahamscan(inputSet: list) -> list:
 		stack.append(point)
 	return stack
 
-def genPoint() -> tuple:
+def gen_point() -> tuple:
 	return (random.randint(0, 32767), random.randint(0, 32767))
 
-def genPoints(limit: int) -> list:
-	return [genPoint() for _ in range(limit)]
+def gen_points(limit: int) -> list:
+	return [gen_point() for _ in range(limit)]
 
-inputSet = genPoints(300)
-outputSet = grahamscan(inputSet)
+def run_tests(limits: list, tests = 100):
+	for limit in limits:
+		data_generation_time = timeit.timeit('data_generator(limit)', number = tests, globals={'data_generator': gen_points, 'limit': limit})
+		total_time = timeit.timeit('grahamscan(data_generator(limit))', number = tests, globals={'grahamscan': grahamscan, 'data_generator': gen_points, 'limit': limit})
+		print(f'limit({limit}) : {(total_time - data_generation_time) / tests} seconds')
 
-plt.figure()
+if len(sys.argv) >= 2 and sys.argv[1] == "run-tests":
+	limits = [100, 500, 1000, 5000, 10000]
+	run_tests(limits)
+else:
+	inputSet = gen_points(300)
+	outputSet = grahamscan(inputSet)
 
-input_xs, input_ys = zip(*inputSet)
-plt.scatter(input_xs, input_ys)
+	plt.figure()
 
-outputSet.append(outputSet[0])
-output_xs, output_ys = zip(*outputSet)
-plt.plot(output_xs, output_ys)
-plt.show()
+	input_xs, input_ys = zip(*inputSet)
+	plt.scatter(input_xs, input_ys)
+
+	outputSet.append(outputSet[0])
+	output_xs, output_ys = zip(*outputSet)
+	plt.plot(output_xs, output_ys)
+	plt.show()
