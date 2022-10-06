@@ -2,6 +2,7 @@ import random
 import sys
 import timeit
 from math import atan2
+from operator import le
 
 import matplotlib.pyplot as plt
 
@@ -77,21 +78,48 @@ def grahamscan(inputSet: list) -> list:
 		stack.append(point)
 	return stack
 
+def join_worst_case(points: list, left: list, right: list, low: int, mid: int, high: int):
+	for i in range(mid - low + 1):
+		points[i] = left[i]
+	for x in range(high - mid):
+		points[i + x + 1] = right[x]
+
+def worst_case_merge_sort(points: list, low: int, high: int):
+	if low < high:
+		mid = low + ((high - low) // 2)
+		left = [points[i * 2] for i in range(mid - low + 1)]
+		right = [points[i * 2 + 1] for i in range(high - mid)]
+
+		worst_case_merge_sort(left, low, mid)
+		worst_case_merge_sort(right, mid + 1, high)
+		join_worst_case(points, left, right, low, mid, high)
+
 def gen_point() -> tuple:
 	return (random.randint(0, 32767), random.randint(0, 32767))
 
 def gen_points(limit: int) -> list:
 	return [gen_point() for _ in range(limit)]
 
-def run_tests(limits: list, tests = 100):
+def gen_worst_case_points(limit: int) -> list:
+	inputSet = gen_points(limit)
+	ref = find_bottom_most(inputSet)
+	angles = dict([(point, cal_polar_angle(point, ref)) for point in inputSet])
+
+	merge_sort(angles, inputSet, [None] * len(inputSet), ref, 0, len(inputSet) - 1)
+	worst_case_merge_sort(inputSet, 0, len(inputSet) - 1)
+	return inputSet
+
+def run_tests(limits: list, points_generator, case, tests = 100):
+	print("==========", f"Case: {case}", "==========")
 	for limit in limits:
-		data_generation_time = timeit.timeit('data_generator(limit)', number = tests, globals={'data_generator': gen_points, 'limit': limit})
-		total_time = timeit.timeit('grahamscan(data_generator(limit))', number = tests, globals={'grahamscan': grahamscan, 'data_generator': gen_points, 'limit': limit})
+		data_generation_time = timeit.timeit('points_generator(limit)', number = tests, globals={'points_generator': points_generator, 'limit': limit})
+		total_time = timeit.timeit('grahamscan(points_generator(limit))', number = tests, globals={'grahamscan': grahamscan, 'points_generator': points_generator, 'limit': limit})
 		print(f'limit({limit}) : {(total_time - data_generation_time) / tests} seconds')
 
 if len(sys.argv) >= 2 and sys.argv[1] == "run-tests":
 	limits = [100, 500, 1000, 5000, 10000]
-	run_tests(limits)
+	run_tests(limits, gen_points, "Normal")
+	run_tests(limits, gen_worst_case_points, "Worst")
 else:
 	inputSet = gen_points(300)
 	outputSet = grahamscan(inputSet)
